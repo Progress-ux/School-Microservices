@@ -16,8 +16,9 @@ public class User {
     private String password_hash;
     private String first_name, last_name;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String role;
+    private Role role;
 
     private LocalDateTime created_at;
     private LocalDateTime updated_at;
@@ -38,13 +39,18 @@ public class User {
     public String getLast_name() { return last_name; }
     public void setLast_name(String last_name) { this.last_name = last_name; }
 
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
 
     @PrePersist
     protected void onCreate() {
         created_at = LocalDateTime.now();
         updated_at = created_at;
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updated_at = LocalDateTime.now();
     }
 
 }

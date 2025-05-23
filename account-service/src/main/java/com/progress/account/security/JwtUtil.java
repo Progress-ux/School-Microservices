@@ -1,5 +1,6 @@
 package com.progress.account.security;
 
+import com.progress.account.model.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -13,11 +14,14 @@ import java.util.Map;
 
 @Component
 public class JwtUtil {
+
+    public JwtUtil() {}
+
     private final SecretKey key = Jwts.SIG.HS256.key().build();
 
-    public String generateToken(Long id, String email, String role) {
+    public String generateToken(Long id, String email, Role role) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("role", role);
+        claims.put("role", role.name());
         claims.put("id", id);
         return createToken(claims, email);
     }
