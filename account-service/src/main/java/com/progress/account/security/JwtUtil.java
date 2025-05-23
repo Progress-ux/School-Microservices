@@ -14,18 +14,18 @@ import java.util.Map;
 @Component
 public class JwtUtil {
     private final SecretKey key = Jwts.SIG.HS256.key().build();
-    private final long validityInMilliseconds = 3600000; // 1 hour
 
-    public String generateToken(String email, String role) {
+    public String generateToken(Long id, String email, String role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role);
+        claims.put("id", id);
         return createToken(claims, email);
     }
 
     private String createToken(Map<String, Object> claims, String subject)
     {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + validityInMilliseconds);
+        Date validity = new Date(now.getTime() + 3600000); // 1 час
 
         return Jwts.builder()
                 .claims(claims)
@@ -36,20 +36,17 @@ public class JwtUtil {
                 .compact();
     }
 
-    public boolean isAuthorized(String token, String expectedEmail, String requiredRole)
-    {
-        try {
-            String email = extractEmail(token);
-            String role = extractRole(token);
-            return email.equals(expectedEmail) && role.equals(requiredRole) && !isTokenExpired(token);
-        } catch (Exception e) {
-            return false;
-        }
-    }
+//    public boolean isAuthorized(String token, String expectedEmail, String requiredRole)
+//    {
+//        try {
+//            String email = extractEmail(token);
+//            String role = extractRole(token);
+//            return email.equals(expectedEmail) && role.equals(requiredRole) && !isTokenExpired(token);
+//        } catch (Exception e) {
+//            return false;
+//        }
+//    }
 
-    public String extractEmail(String token) {
-        return extractAllClaims(token).getSubject();
-    }
 
     private Claims extractAllClaims(String token)
     {
@@ -65,7 +62,16 @@ public class JwtUtil {
         return extractAllClaims(token).getExpiration().before(new Date());
     }
 
+    public String extractEmail(String token) {
+        return extractAllClaims(token).getSubject();
+    }
+
     public String extractRole(String token) {
         return (String) extractAllClaims(token).get("role");
+    }
+
+    public Long extractId(String token)
+    {
+        return ((Number) extractAllClaims(token).get("id")).longValue();
     }
 }
