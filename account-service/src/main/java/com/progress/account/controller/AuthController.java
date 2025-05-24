@@ -7,6 +7,12 @@ import com.progress.account.model.User;
 import com.progress.account.repository.UserRepository;
 import com.progress.account.security.JwtUtil;
 import com.progress.account.service.AuthService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +25,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/auth")
+@Tag(name = "Аутентификация", description = "Операции регистрации, входа, получения и валидации пользователей")
 public class AuthController {
 
     private final JwtUtil jwtUtil;
@@ -36,6 +43,11 @@ public class AuthController {
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Operation(summary = "Регистрация нового пользователя")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Пользователь зарегистрирован"),
+        @ApiResponse(responseCode = "400", description = "Ошибка валидации или пользователь уже существует")
+    })
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody RegisterRequest request)
     {
@@ -47,6 +59,11 @@ public class AuthController {
         }
     }
 
+    @Operation(summary = "Вход пользователя", description = "Возвращает JWT токен при успешной аутентификации")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Успешный вход"),
+            @ApiResponse(responseCode = "401", description = "Неверный пароль или пользователь не найден")
+    })
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request)
     {
@@ -60,6 +77,12 @@ public class AuthController {
         return ResponseEntity.ok(new AuthResponse(token));
     }
 
+    @Operation(summary = "Получение информации о текущем пользователе",
+               security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Пользователь найден"),
+            @ApiResponse(responseCode = "401", description = "Невалидный или отсутствующий токен")
+    })
     @GetMapping("/user")
     public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String authorizationHeader)
     {
@@ -76,8 +99,8 @@ public class AuthController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Токен истек");
             }
 
-            String email = jwtUtil.extractEmail(token);
-            User user = userRepository.findByEmail(email)
+            Long id = jwtUtil.extractId(token);
+            User user = userRepository.findById(id)
                     .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
 
             Map<String, Object> userInfo = new HashMap<>();
@@ -94,6 +117,12 @@ public class AuthController {
         }
     }
 
+    @Operation(summary = "Проверка валидности токена",
+               security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Токен валиден"),
+            @ApiResponse(responseCode = "401", description = "Токен невалиден или истёк")
+    })
     @GetMapping("/validate")
     public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String authHeader)
     {
@@ -124,6 +153,13 @@ public class AuthController {
         }
     }
 
+    @Operation(summary = "Обновление данных пользователя",
+               security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Информация обновлена"),
+            @ApiResponse(responseCode = "400", description = "Ошибка валидации"),
+            @ApiResponse(responseCode = "401", description = "Нет токена")
+    })
     @PutMapping("/user")
     public ResponseEntity<?> updateDataUser(@RequestBody RegisterRequest request, HttpServletRequest httpServletRequest)
     {
@@ -143,6 +179,15 @@ public class AuthController {
         }
     }
 
+    @Operation(summary = "Удаление пользователя",
+               description = "Удаляет пользователя. Доступно только администраторам.",
+               security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Пользователь удалён"),
+            @ApiResponse(responseCode = "401", description = "Нет токена или истёк"),
+            @ApiResponse(responseCode = "403", description = "Доступ запрещён"),
+            @ApiResponse(responseCode = "500", description = "Ошибка сервера")
+    })
     @DeleteMapping("/user")
     public ResponseEntity<?> deleteUser(@RequestHeader("Authorization") String authHeader)
     {
@@ -160,12 +205,6 @@ public class AuthController {
             }
 
             Long id = jwtUtil.extractId(token);
-            String role = jwtUtil.extractRole(token);
-
-            if(!role.equals("ADMIN"))
-            {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Доступ запрещён: требуется роль ADMIN");
-            }
 
             User user = userRepository.findById(id)
                     .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
@@ -176,5 +215,72 @@ public class AuthController {
         {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ошибка при удалении пользователя");
         }
+    }
+
+    @Operation(summary = "Получение списка всех пользователей",
+               description = "Возвращает информацию о пользователях. Доступно только администраторам.",
+               security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Список пользователей получен"),
+            @ApiResponse(responseCode = "401", description = "Нет токена или истёк"),
+            @ApiResponse(responseCode = "403", description = "Доступ запрещён"),
+    })
+    @GetMapping("/users")
+    public ResponseEntity<?> getAllUsers(@RequestHeader("Authorization") String authHeader)
+    {
+        if (authHeader == null || !authHeader.startsWith("Bearer "))
+        {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Отсутствует токен");
+        }
+
+        String token = authHeader.substring(7);
+        if (jwtUtil.isTokenExpired(token))
+        {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Токен истек");
+        }
+        return ResponseEntity.ok(userRepository.findAll());
+    }
+
+    @Operation(
+            summary = "Получение пользователя по ID",
+            description = "Возвращает информацию о пользователе по ID. Доступно только администраторам.",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Пользователь найден"),
+            @ApiResponse(responseCode = "401", description = "Отсутствует токен или токен истёк"),
+            @ApiResponse(responseCode = "403", description = "Доступ запрещён — требуется роль ADMIN"),
+            @ApiResponse(responseCode = "404", description = "Пользователь с указанным ID не найден")
+    })
+    @GetMapping("/user/{id}")
+    public ResponseEntity<?> getUserById(@Parameter(description = "ID пользователя", required = true)
+                                             @PathVariable(name = "id") Long id,
+                                         @Parameter(description = "Токен")
+                                            @RequestHeader("Authorization") String authHeader)
+    {
+        if (authHeader == null || !authHeader.startsWith("Bearer "))
+        {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Отсутствует токен");
+        }
+
+        String token = authHeader.substring(7);
+        if (jwtUtil.isTokenExpired(token))
+        {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Токен истек");
+        }
+        User user = userRepository.findById(id)
+                .orElse(null);
+
+        if (user == null)
+        {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Пользователь не найден");
+        }
+        Map<String, Object> userInfo = new HashMap<>();
+        userInfo.put("id", user.getId());
+        userInfo.put("email", user.getEmail());
+        userInfo.put("firstName", user.getFirst_name());
+        userInfo.put("lastName", user.getLast_name());
+        userInfo.put("role", user.getRole());
+
+        return ResponseEntity.ok(userInfo);
     }
 }

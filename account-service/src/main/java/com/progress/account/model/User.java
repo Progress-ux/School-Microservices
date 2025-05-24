@@ -9,12 +9,17 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String email;
 
     @Column(name = "password_hash", nullable = false)
     private String password_hash;
-    private String first_name, last_name;
+
+    @Column(nullable = false)
+    private String first_name;
+
+    @Column(nullable = false)
+    private String last_name;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -19,6 +19,13 @@ public class JwtUtil {
 
     private final SecretKey key = Jwts.SIG.HS256.key().build();
 
+    /**
+     * Генерация JWT токена на основе ID пользователя, email и роли.
+     * @param id ID пользователя
+     * @param email Email пользователя
+     * @param role Роль пользователя (например, ADMIN, STUDENT и т.д.)
+     * @return Сгенерированный JWT токен
+     */
     public String generateToken(Long id, String email, Role role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role.name());
@@ -29,7 +36,7 @@ public class JwtUtil {
     private String createToken(Map<String, Object> claims, String subject)
     {
         Date now = new Date();
-        Date validity = new Date(now.getTime() + 3600000); // 1 час
+        Date validity = new Date(now.getTime() + 3600000); // токен действителен 1 час
 
         return Jwts.builder()
                 .claims(claims)
@@ -40,18 +47,7 @@ public class JwtUtil {
                 .compact();
     }
 
-//    public boolean isAuthorized(String token, String expectedEmail, String requiredRole)
-//    {
-//        try {
-//            String email = extractEmail(token);
-//            String role = extractRole(token);
-//            return email.equals(expectedEmail) && role.equals(requiredRole) && !isTokenExpired(token);
-//        } catch (Exception e) {
-//            return false;
-//        }
-//    }
-
-
+    // Метод для извлечения всех claims (полей) из JWT токена
     private Claims extractAllClaims(String token)
     {
         return Jwts.parser()
@@ -61,19 +57,39 @@ public class JwtUtil {
                 .getPayload();
     }
 
+    /**
+     * Проверка, истёк ли срок действия токена.
+     * @param token JWT токен
+     * @return true, если токен просрочен
+     */
     public boolean isTokenExpired(String token)
     {
         return extractAllClaims(token).getExpiration().before(new Date());
     }
 
+    /**
+     * Извлечение email (subject) из токена.
+     * @param token JWT токен
+     * @return Email пользователя
+     */
     public String extractEmail(String token) {
         return extractAllClaims(token).getSubject();
     }
 
+    /**
+     * Извлечение роли пользователя из токена.
+     * @param token JWT токен
+     * @return Роль в виде строки
+     */
     public String extractRole(String token) {
         return (String) extractAllClaims(token).get("role");
     }
 
+    /**
+     * Извлечение ID пользователя из токена.
+     * @param token JWT токен
+     * @return ID пользователя
+     */
     public Long extractId(String token)
     {
         return ((Number) extractAllClaims(token).get("id")).longValue();

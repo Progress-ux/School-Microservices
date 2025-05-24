@@ -16,6 +16,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.util.List;
 
+/**
+ * JWT фильтр, который проверяет авторизацию пользователя на каждом HTTP-запросе.
+ * Если в заголовке Authorization есть валидный JWT токен, извлекает из него email и роль,
+ * и вручную устанавливает аутентификацию в SecurityContext.
+ */
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
 
@@ -29,18 +34,36 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain)
     throws ServletException, IOException {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            if (!jwtUtil.isTokenExpired(token)) {
-                String email = jwtUtil.extractEmail(token);
-                String roleStr = jwtUtil.extractRole(token);
-                Role role = Role.valueOf(roleStr);
 
-                // Создаём Authentication вручную
-                List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
-                Authentication auth = new UsernamePasswordAuthenticationToken(email, null, authorities);
-                SecurityContextHolder.getContext().setAuthentication(auth);
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader != null && authHeader.startsWith("Bearer ") &&
+                SecurityContextHolder.getContext().getAuthentication() == null) {
+
+            String token = authHeader.substring(7);
+
+            try {
+
+                if (!jwtUtil.isTokenExpired(token)) {
+
+                    String email = jwtUtil.extractEmail(token);
+                    String roleStr = jwtUtil.extractRole(token);
+                    Role role = Role.valueOf(roleStr);
+
+                    // Создаем список прав на основе роли
+                    List<GrantedAuthority> authorities =
+                            List.of(new SimpleGrantedAuthority(role.toString()));
+
+                    // Создаём объект аутентификации
+                    Authentication auth =
+                            new UsernamePasswordAuthenticationToken(email, null, authorities);
+
+                    // Устанавливаем аутентификацию в контекст безопасности
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
+            } catch (Exception e) {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    return;
             }
         }
         filterChain.doFilter(request, response);

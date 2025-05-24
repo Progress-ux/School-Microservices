@@ -19,6 +19,11 @@ public class AuthService {
         this.jwtUtil = jwtUtil;
     }
 
+    /**
+     * Регистрация нового пользователя.
+     * Проверяет, что email не занят, хеширует пароль и сохраняет пользователя в БД.
+     * @param request объект с данными регистрации
+     */
     public void register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email уже используется");
@@ -34,6 +39,13 @@ public class AuthService {
         userRepository.save(user);
     }
 
+    /**
+     * Обновление данных пользователя.
+     * Извлекает ID пользователя и обновляет данные если они переданы.
+     * @param token JWT токен авторизации
+     * @param request объект с новыми данными пользователя
+     */
+
     public void updateUser(String token, RegisterRequest request)
     {
         Long userId = jwtUtil.extractId(token);
@@ -41,13 +53,14 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
 
         if (request.getEmail() != null) user.setEmail(request.getEmail());
+        if (request.getPassword() != null)
+        {
+            // хешируем пароль перед сохранением
+            user.setPassword_hash(passwordEncoder.encode(request.getPassword()));
+        }
         if (request.getFirst_name() != null) user.setFirst_name(request.getFirst_name());
         if (request.getLast_name() != null) user.setLast_name(request.getLast_name());
 
-        if (request.getPassword() != null)
-        {
-            user.setPassword_hash(passwordEncoder.encode(request.getPassword()));
-        }
         userRepository.save(user);
     }
 

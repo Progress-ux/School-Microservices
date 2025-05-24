@@ -32,17 +32,16 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers(
-                    "/swagger-ui/**",
-                    "/v3/api-docs/**",
-                    "/swagger-ui.html#/**"
+                    "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html"
                     ).permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/v1/auth/register", "/api/v1/auth/login").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/v1/auth/user", "/api/v1/auth/validate").authenticated()
-                    .requestMatchers(HttpMethod.GET, "/api/v1/auth/users", "/api/v1/auth/user/{id}").hasRole("ADMIN")
+                    .requestMatchers(HttpMethod.GET, "/api/v1/auth/validate").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/auth/user").authenticated()
                     .requestMatchers(HttpMethod.PUT, "/api/v1/auth/user").authenticated()
+                    .requestMatchers(HttpMethod.DELETE, "/api/v1/auth/user").hasAuthority("ADMIN")
+                    .requestMatchers(HttpMethod.GET, "/api/v1/auth/users", "/api/v1/auth/user/{id}").hasAuthority("ADMIN")
 
-
-                .anyRequest().authenticated()
+                .anyRequest().denyAll()
             )
                 .addFilterBefore(jwtAuthFilter(), UsernamePasswordAuthenticationFilter.class);
 
