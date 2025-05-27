@@ -127,8 +127,6 @@ public class AuthController {
     })
     public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String header)
     {
-        System.out.println("/validate - " + header);
-
         if(header == null)
         {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Отсутствует токен");
@@ -262,7 +260,7 @@ public class AuthController {
             @ApiResponse(responseCode = "403", description = "Доступ запрещён — требуется роль ADMIN"),
             @ApiResponse(responseCode = "404", description = "Пользователь с указанным ID не найден")
     })
-    public ResponseEntity<?> getUserById(@Parameter(description = "ID пользователя", required = true)
+    public ResponseEntity<?> getUserById(@Parameter(description = "ID пользователя")
                                              @PathVariable(name = "id") Long id,
                                          HttpServletRequest httpServletRequest)
     {
@@ -287,7 +285,7 @@ public class AuthController {
         }
 
         Map<String, Object> userInfo = new HashMap<>();
-        userInfo.put("id", user.getId());
+        userInfo.put("id", id);
         userInfo.put("email", user.getEmail());
         userInfo.put("firstName", user.getFirst_name());
         userInfo.put("lastName", user.getLast_name());
