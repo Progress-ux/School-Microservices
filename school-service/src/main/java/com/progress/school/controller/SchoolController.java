@@ -14,6 +14,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,19 +55,22 @@ public class SchoolController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Отсутствует токен");
         }
 
-        return validateTokenService.getUserInfo(header).map(userInfo -> {
-            String role = (String) userInfo.get("role");
-            if("ADMIN".equals(role))
-            {
-                schoolService.createSchool(request);
-                return ResponseEntity.ok("Школа добавлена");
-            }
-            else
-            {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Недостаточно прав");
-            }
-        }).defaultIfEmpty(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Невалидный токен")).block();
+        Map<String, Object> userInfo = validateTokenService.getUserInfo(header);
+        if (userInfo == null || userInfo.get("role") == null)
+        {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Невалидный токен");
+        }
+
+        String role = (String) userInfo.get("role");
+        if ("ADMIN".equals(role))
+        {
+            schoolService.createSchool(request);
+            return ResponseEntity.ok("Школа добавлена");
+        }
+        else
+        {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Недостаточно прав");
+        }
     }
 
     @GetMapping("/schools")
@@ -103,6 +107,41 @@ public class SchoolController {
         schoolInfo.put("address", school.getAddress());
 
         return ResponseEntity.ok(schoolInfo);
+    }
+
+    @PutMapping("/schools/{id}")
+    @Operation(
+            summary = "Обновление данных школы",
+            description = "Доступно только администратору",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    public ResponseEntity<?> updateIdSchool(@PathVariable(name = "id") Long id,
+                                            @RequestBody CreateRequest request,
+                                            HttpServletRequest httpServletRequest)
+    {
+        String header = httpServletRequest.getHeader("Authorization");
+
+        if(header == null || !header.startsWith("Bearer "))
+        {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Отсутствует токен");
+        }
+
+        Map<String, Object> userInfo = validateTokenService.getUserInfo(header);
+        if (userInfo == null || userInfo.get("role") == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Невалидный токен");
+        }
+
+        String role = (String) userInfo.get("role");
+
+        if ("ADMIN".equals(role))
+        {
+            schoolService.updateSchool(id, request);
+            return ResponseEntity.ok("Данные школы обновлены");
+        }
+        else
+        {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Недостаточно прав");
+        }
     }
 
 

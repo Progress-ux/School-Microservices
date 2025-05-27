@@ -27,4 +27,15 @@ public class SchoolService {
 
         schoolRepository.save(school);
     }
+
+    public void updateSchool(Long id, CreateRequest request)
+    {
+        School school = schoolRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Школа не найдена"));
+
+        if(request.getName() != null) school.setName(request.getName());
+        if(request.getAddress() != null) school.setAddress(request.getAddress());
+
+        schoolRepository.save(school);
+    }
 }

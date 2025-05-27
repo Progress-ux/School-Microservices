@@ -1,29 +1,37 @@
 package com.progress.school.service;
 
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
+import org.springframework.web.client.RestTemplate;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @Service
 public class ValidateTokenService {
-    private final WebClient webClient;
+    private final RestTemplate restTemplate;
 
-    public ValidateTokenService(WebClient.Builder webClientBuilder)
+    public ValidateTokenService(RestTemplate restTemplate)
     {
-        this.webClient = webClientBuilder.baseUrl("http://account-service:8080").build();
+        this.restTemplate = new RestTemplate();
     }
 
-    public Mono<Map<String, Object>> getUserInfo(String token)
+    public Map<String, Object> getUserInfo(String token)
     {
-        return webClient.get()
-                .uri("/api/v1/auth/validate")
-                .header("Authorization", token)
-                .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                .onErrorResume(e -> Mono.empty());
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", token);
+
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                "http://account-service:8080/api/v1/auth/validate",
+                HttpMethod.GET,
+                entity,
+                new ParameterizedTypeReference<Map<String, Object>>() {}
+        );
+        return response.getBody();
     }
 }
