@@ -1,8 +1,8 @@
 spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:App}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:admin}
     driver-class-name: org.postgresql.Driver
 
 
@@ -15,8 +15,8 @@ spring:
       hibernate:
         format_sql: true
 
-server:
-  port: 8080
+account:
+  url: http://localhost:8080
 
-jwt:
-  secret: "Z7skf82jf82Jdkd93kslLQ8skd92kslKdjf92ls9Jfdlks92lsdjf92lsdjf92js"
+server:
+  port: 8081

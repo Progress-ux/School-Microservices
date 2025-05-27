@@ -9,6 +9,7 @@ import com.progress.account.security.JwtUtil;
 import com.progress.account.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -43,12 +44,13 @@ public class AuthController {
         this.passwordEncoder = passwordEncoder;
     }
 
-    @Operation(summary = "Регистрация нового пользователя")
+    @PostMapping("/register")
+    @Operation(summary = "Регистрация нового пользователя",
+    security = @SecurityRequirement(name = ""))
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Пользователь зарегистрирован"),
         @ApiResponse(responseCode = "400", description = "Ошибка валидации или пользователь уже существует")
     })
-    @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody RegisterRequest request)
     {
         try {
@@ -59,12 +61,14 @@ public class AuthController {
         }
     }
 
-    @Operation(summary = "Вход пользователя", description = "Возвращает JWT токен при успешной аутентификации")
+    @PostMapping("/login")
+    @Operation(summary = "Вход пользователя",
+            description = "Возвращает JWT токен при успешной аутентификации",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Успешный вход"),
             @ApiResponse(responseCode = "401", description = "Неверный пароль или пользователь не найден")
     })
-    @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request)
     {
         User user = userRepository.findByEmail(request.getEmail())
@@ -77,61 +81,61 @@ public class AuthController {
         return ResponseEntity.ok(new AuthResponse(token));
     }
 
+    @GetMapping("/user")
     @Operation(summary = "Получение информации о текущем пользователе",
                security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Пользователь найден"),
             @ApiResponse(responseCode = "401", description = "Невалидный или отсутствующий токен")
     })
-    @GetMapping("/user")
-    public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String authorizationHeader)
+    public ResponseEntity<?> getCurrentUser(HttpServletRequest httpServletRequest)
     {
         try {
-            if(authorizationHeader == null || !authorizationHeader.startsWith("Bearer "))
+            String header = httpServletRequest.getHeader("Authorization");
+
+            if(header == null || !header.startsWith("Bearer "))
             {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Отсутствует токен");
             }
 
-            String token = authorizationHeader.substring(7);
+            String token = header.substring(7);
 
             if(jwtUtil.isTokenExpired(token))
             {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Токен истек");
             }
 
-            Long id = jwtUtil.extractId(token);
-            User user = userRepository.findById(id)
-                    .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
-
             Map<String, Object> userInfo = new HashMap<>();
-            userInfo.put("id", user.getId());
-            userInfo.put("email", user.getEmail());
-            userInfo.put("firstName", user.getFirst_name());
-            userInfo.put("lastName", user.getLast_name());
-            userInfo.put("role", user.getRole());
+            userInfo.put("id", jwtUtil.extractId(token));
+            userInfo.put("email", jwtUtil.extractEmail(token));
+            userInfo.put("role", jwtUtil.extractRole(token));
 
             return ResponseEntity.ok(userInfo);
+
         } catch (Exception e)
         {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Невалидный токен");
         }
     }
 
+    @GetMapping("/validate")
     @Operation(summary = "Проверка валидности токена",
-               security = @SecurityRequirement(name = "bearerAuth"))
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Токен валиден"),
             @ApiResponse(responseCode = "401", description = "Токен невалиден или истёк")
     })
-    @GetMapping("/validate")
-    public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String authHeader)
+    public ResponseEntity<?> validateToken(@RequestHeader("Authorization") String header)
     {
-        if(authHeader == null || !authHeader.startsWith("Bearer "))
+        System.out.println("/validate - " + header);
+
+        if(header == null)
         {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Отсутствует токен");
         }
 
-        String token = authHeader.substring(7);
+        String token = header.startsWith("Bearer ") ? header.substring(7) : header;
+
         try {
             if(jwtUtil.isTokenExpired(token))
             {
@@ -153,6 +157,7 @@ public class AuthController {
         }
     }
 
+    @PutMapping("/user")
     @Operation(summary = "Обновление данных пользователя",
                security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
@@ -160,17 +165,22 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Ошибка валидации"),
             @ApiResponse(responseCode = "401", description = "Нет токена")
     })
-    @PutMapping("/user")
     public ResponseEntity<?> updateDataUser(@RequestBody RegisterRequest request, HttpServletRequest httpServletRequest)
     {
         try {
-            String authHeader = httpServletRequest.getHeader("Authorization");
-            if(authHeader == null || !authHeader.startsWith("Bearer "))
+            String header = httpServletRequest.getHeader("Authorization");
+            if(header == null || !header.startsWith("Bearer "))
             {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Отсутствует токен");
             }
 
-            String token = authHeader.substring(7);
+            String token = header.substring(7);
+
+            if(jwtUtil.isTokenExpired(token))
+            {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Токен истек");
+            }
+
             authService.updateUser(token, request);
             return ResponseEntity.ok("Информация обновлена");
 
@@ -179,6 +189,7 @@ public class AuthController {
         }
     }
 
+    @DeleteMapping("/user")
     @Operation(summary = "Удаление пользователя",
                description = "Удаляет пользователя. Доступно только администраторам.",
                security = @SecurityRequirement(name = "bearerAuth"))
@@ -188,23 +199,21 @@ public class AuthController {
             @ApiResponse(responseCode = "403", description = "Доступ запрещён"),
             @ApiResponse(responseCode = "500", description = "Ошибка сервера")
     })
-    @DeleteMapping("/user")
-    public ResponseEntity<?> deleteUser(@RequestHeader("Authorization") String authHeader)
+    public ResponseEntity<?> deleteUser(@RequestBody Long id, HttpServletRequest httpServletRequest)
     {
         try {
-            if(authHeader == null || !authHeader.startsWith("Bearer "))
+            String header = httpServletRequest.getHeader("Authorization");
+            if(header == null || !header.startsWith("Bearer "))
             {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Отсутствует токен");
             }
 
-            String token = authHeader.substring(7);
+            String token = header.substring(7);
 
-            if (jwtUtil.isTokenExpired(token))
+            if(jwtUtil.isTokenExpired(token))
             {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Токен истек");
             }
-
-            Long id = jwtUtil.extractId(token);
 
             User user = userRepository.findById(id)
                     .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
@@ -217,6 +226,7 @@ public class AuthController {
         }
     }
 
+    @GetMapping("/users")
     @Operation(summary = "Получение списка всех пользователей",
                description = "Возвращает информацию о пользователях. Доступно только администраторам.",
                security = @SecurityRequirement(name = "bearerAuth"))
@@ -225,22 +235,23 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Нет токена или истёк"),
             @ApiResponse(responseCode = "403", description = "Доступ запрещён"),
     })
-    @GetMapping("/users")
-    public ResponseEntity<?> getAllUsers(@RequestHeader("Authorization") String authHeader)
+    public ResponseEntity<?> getAllUsers(HttpServletRequest httpServletRequest)
     {
-        if (authHeader == null || !authHeader.startsWith("Bearer "))
-        {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Отсутствует токен");
-        }
+        String header = httpServletRequest.getHeader("Authorization");
+            if(header == null || !header.startsWith("Bearer "))
+            {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Отсутствует токен");
+            }
 
-        String token = authHeader.substring(7);
-        if (jwtUtil.isTokenExpired(token))
-        {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Токен истек");
-        }
+            if(jwtUtil.isTokenExpired(header.substring(7)))
+            {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Токен истек");
+            }
+
         return ResponseEntity.ok(userRepository.findAll());
     }
 
+    @GetMapping("/user/{id}")
     @Operation(
             summary = "Получение пользователя по ID",
             description = "Возвращает информацию о пользователе по ID. Доступно только администраторам.",
@@ -251,22 +262,22 @@ public class AuthController {
             @ApiResponse(responseCode = "403", description = "Доступ запрещён — требуется роль ADMIN"),
             @ApiResponse(responseCode = "404", description = "Пользователь с указанным ID не найден")
     })
-    @GetMapping("/user/{id}")
     public ResponseEntity<?> getUserById(@Parameter(description = "ID пользователя", required = true)
                                              @PathVariable(name = "id") Long id,
-                                         @Parameter(description = "Токен")
-                                            @RequestHeader("Authorization") String authHeader)
+                                         HttpServletRequest httpServletRequest)
     {
-        if (authHeader == null || !authHeader.startsWith("Bearer "))
-        {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Отсутствует токен");
-        }
 
-        String token = authHeader.substring(7);
-        if (jwtUtil.isTokenExpired(token))
-        {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Токен истек");
-        }
+        String header = httpServletRequest.getHeader("Authorization");
+        if(header == null || !header.startsWith("Bearer "))
+            {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Отсутствует токен");
+            }
+
+            if(jwtUtil.isTokenExpired(header.substring(7)))
+            {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Токен истек");
+            }
+
         User user = userRepository.findById(id)
                 .orElse(null);
 
@@ -274,6 +285,7 @@ public class AuthController {
         {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Пользователь не найден");
         }
+
         Map<String, Object> userInfo = new HashMap<>();
         userInfo.put("id", user.getId());
         userInfo.put("email", user.getEmail());

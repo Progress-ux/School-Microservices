@@ -24,6 +24,7 @@ import java.util.List;
 public class JwtAuthFilter extends OncePerRequestFilter {
     private final JwtUtil jwtUtil;
 
+
     public JwtAuthFilter(JwtUtil jwtUtil)
     {
         this.jwtUtil = jwtUtil;
@@ -36,19 +37,23 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
+        System.out.println("Header - " + authHeader);
 
         if (authHeader != null && authHeader.startsWith("Bearer ") &&
                 SecurityContextHolder.getContext().getAuthentication() == null) {
 
             String token = authHeader.substring(7);
+            System.out.println("token - " + token);
 
             try {
 
                 if (!jwtUtil.isTokenExpired(token)) {
-
                     String email = jwtUtil.extractEmail(token);
                     String roleStr = jwtUtil.extractRole(token);
                     Role role = Role.valueOf(roleStr);
+
+                    System.out.println("email - " + email);
+                    System.out.println("role - " + roleStr);
 
                     // Создаем список прав на основе роли
                     List<GrantedAuthority> authorities =

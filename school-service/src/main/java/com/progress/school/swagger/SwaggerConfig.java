@@ -1,4 +1,4 @@
-package com.progress.account.swagger;
+package com.progress.school.swagger;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -18,9 +18,9 @@ public class SwaggerConfig {
         final String securitySchemeName = "bearerAuth";
         return new OpenAPI()
                 .info(new Info()
-                    .title("Account Service API")
+                    .title("School API")
                     .version("1.0")
-                    .description("Документация для сервиса авторизации"))
+                    .description("Документация для сервиса школы"))
                 .addSecurityItem(new SecurityRequirement()
                         .addList(securitySchemeName))
                 .components(new Components()

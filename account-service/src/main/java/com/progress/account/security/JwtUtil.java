@@ -3,21 +3,28 @@ package com.progress.account.security;
 import com.progress.account.model.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import static io.jsonwebtoken.Jwts.*;
+
 @Component
 public class JwtUtil {
 
-    public JwtUtil() {}
+    private final SecretKey key;
 
-    private final SecretKey key = Jwts.SIG.HS256.key().build();
+    public JwtUtil(@Value("${jwt.secret}") String secret) {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
+
 
     /**
      * Генерация JWT токена на основе ID пользователя, email и роли.
@@ -38,7 +45,7 @@ public class JwtUtil {
         Date now = new Date();
         Date validity = new Date(now.getTime() + 3600000); // токен действителен 1 час
 
-        return Jwts.builder()
+        return builder()
                 .claims(claims)
                 .subject(subject)
                 .issuedAt(now)
@@ -50,6 +57,7 @@ public class JwtUtil {
     // Метод для извлечения всех claims (полей) из JWT токена
     private Claims extractAllClaims(String token)
     {
+        System.out.println("extractAllClaims - " + token);
         return Jwts.parser()
                 .verifyWith(key)
                 .build()
@@ -64,7 +72,9 @@ public class JwtUtil {
      */
     public boolean isTokenExpired(String token)
     {
-        return extractAllClaims(token).getExpiration().before(new Date());
+        boolean isToken = extractAllClaims(token).getExpiration().before(new Date());
+        System.out.println("isTokenExpired" + token + "\nisToken - " + isToken);
+        return isToken;
     }
 
     /**
