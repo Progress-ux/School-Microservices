@@ -23,11 +23,10 @@ public class School {
     private LocalDateTime updated_at;
 
 
-//    @ManyToMany(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
-//    @JoinTable(name = "school_teacher",
-//        joinColumns = @JoinColumn(name = "school_id"),
-//        inverseJoinColumns = @JoinColumn(name = "teacher_id"))
-//    private Set<Long> teachersId = new HashSet<>();
+    @ElementCollection
+    @CollectionTable(name = "school_teachers", joinColumns = @JoinColumn(name = "school_id"))
+    @Column(name = "teacher_id")
+    private Set<Long> teacherIds = new HashSet<>();
 
     public School() {}
 

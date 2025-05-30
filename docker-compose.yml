@@ -1,27 +1,12 @@
 version: "3.9"
 
 services:
-  postgres:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: App
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin
-    ports:
-      - "5432:5432"
-    volumes:
-      - pg_data:/var/lib/postgresql/data
-    networks:
-      - backend
-
   account-service:
     build: ./account-service
     ports:
       - "8080:8080"
-    depends_on:
-      - postgres
     environment:
-      DB_HOST: postgres
+      DB_HOST: host.docker.internal
       DB_PORT: 5432
       DB_NAME: App
       DB_USER: postgres
@@ -34,14 +19,14 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      - postgres
       - account-service
     environment:
-      DB_HOST: postgres
+      DB_HOST: host.docker.internal
       DB_PORT: 5432
       DB_NAME: App
       DB_USER: postgres
       DB_PASSWORD: admin
+      ACCOUNT_SERVICE_URL: http://account-service:8080
     networks:
       - backend
 

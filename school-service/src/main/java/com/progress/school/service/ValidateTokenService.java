@@ -14,7 +14,7 @@ import java.util.Map;
 public class ValidateTokenService {
     private final RestTemplate restTemplate;
 
-    public ValidateTokenService(RestTemplate restTemplate)
+    public ValidateTokenService()
     {
         this.restTemplate = new RestTemplate();
     }
@@ -32,6 +32,7 @@ public class ValidateTokenService {
                 entity,
                 new ParameterizedTypeReference<Map<String, Object>>() {}
         );
+        System.out.println("Response from account-service: " + response.getBody());
         return response.getBody();
     }
 }

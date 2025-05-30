@@ -16,7 +16,7 @@ spring:
         format_sql: true
 
 account:
-  url: http://localhost:8080
+  url: ${ACCOUNT_SERVICE_URL:http://localhost:8080}
 
 server:
   port: 8081
