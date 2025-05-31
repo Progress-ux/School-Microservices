@@ -103,7 +103,7 @@ public class SchoolController {
             @ApiResponse(responseCode = "200", description = "Школа найдена"),
             @ApiResponse(responseCode = "404", description = "Школа с указанным ID не найдена")
     })
-    public ResponseEntity<?> getIdSchool(@PathVariable(name = "id") Long id)
+    public ResponseEntity<?> getSchoolById(@PathVariable(name = "id") Long id)
     {
         School school = schoolRepository.findById(id)
                 .orElse(null);
@@ -134,7 +134,7 @@ public class SchoolController {
         @ApiResponse(responseCode = "403", description = "Недостаточно прав"),
         @ApiResponse(responseCode = "404", description = "Школа не найдена")
     })
-    public ResponseEntity<?> updateIdSchool(@PathVariable(name = "id") Long id,
+    public ResponseEntity<?> updateSchoolById(@PathVariable(name = "id") Long id,
                                             @RequestBody CreateRequest request,
                                             HttpServletRequest httpServletRequest)
     {
@@ -169,7 +169,7 @@ public class SchoolController {
         @ApiResponse(responseCode = "403", description = "Недостаточно прав"),
         @ApiResponse(responseCode = "404", description = "Школа не найдена")
     })
-    public ResponseEntity<?> deleteIdSchool(@PathVariable(name = "id") Long id,
+    public ResponseEntity<?> deleteSchoolById(@PathVariable(name = "id") Long id,
                                             HttpServletRequest httpServletRequest)
     {
         Map<String, Object> userInfo = extractUser(httpServletRequest);
@@ -222,7 +222,7 @@ public class SchoolController {
         @ApiResponse(responseCode = "401", description = "Отсутствует или недействительный токен"),
         @ApiResponse(responseCode = "404", description = "Школа с таким ID не найдена")
     })
-    public ResponseEntity<?> validateSchoolId(@RequestParam("id") Long id)
+    public ResponseEntity<?> validateSchoolById(@RequestParam("id") Long id)
     {
         return ResponseEntity.ok(schoolRepository.existsById(id));
     }
@@ -238,7 +238,7 @@ public class SchoolController {
         @ApiResponse(responseCode = "401", description = "Отсутствует или недействительный токен"),
         @ApiResponse(responseCode = "404", description = "Школа с таким ID не найдена")
     })
-    public ResponseEntity<?> getAllStudentsInSchoolId(@PathVariable(name = "id") Long id,
+    public ResponseEntity<?> getAllStudentsInSchoolById(@PathVariable(name = "id") Long id,
                                                       HttpServletRequest httpServletRequest)
     {
         Map<String, Object> userInfo = extractUser(httpServletRequest);
@@ -266,7 +266,7 @@ public class SchoolController {
         @ApiResponse(responseCode = "401", description = "Отсутствует или недействительный токен"),
         @ApiResponse(responseCode = "404", description = "Школа с таким ID не найдена")
     })
-    public ResponseEntity<?> validateTeacher(@PathVariable("id") Long school_id,
+    public ResponseEntity<?> validateTeacherById(@PathVariable("id") Long school_id,
                                              @PathVariable("teacherId") Long teacher_id)
     {
         return ResponseEntity.ok(schoolTeacherRepository.existsBySchoolIdAndTeacherId(school_id, teacher_id));

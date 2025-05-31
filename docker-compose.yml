@@ -28,23 +28,23 @@ services:
     networks:
       - backend
 
-    timetable-service:
-      build: ./timetable-service
-      ports:
-        - "8082:8082"
-      depends_on:
-        - account-service
-        - school-service
-      environment:
-        DB_HOST: host.docker.internal
-        DB_PORT: 5432
-        DB_NAME: App
-        DB_USER: postgres
-        DB_PASSWORD: admin
-        ACCOUNT_SERVICE_URL: http://account-service:8080
-        SCHOOL_SERVICE_URL: http://school-service:8081
-      networks:
-        - backend
+  timetable-service:
+    build: ./timetable-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - account-service
+      - school-service
+    environment:
+      DB_HOST: host.docker.internal
+      DB_PORT: 5432
+      DB_NAME: App
+      DB_USER: postgres
+      DB_PASSWORD: admin
+      ACCOUNT_SERVICE_URL: http://account-service:8080
+      SCHOOL_SERVICE_URL: http://school-service:8081
+    networks:
+      - backend
 
 networks:
   backend:
