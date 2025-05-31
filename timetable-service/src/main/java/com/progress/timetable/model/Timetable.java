@@ -15,11 +15,11 @@ public class Timetable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long school_id;
+    @Column(nullable = false, name = "school_id")
+    private Long schoolId;
 
-    @Column(nullable = false)
-    private Long teacher_id;
+    @Column(nullable = false, name = "teacher_id")
+    private Long teacherId;
 
     @Column(nullable = false)
     private String subject;
@@ -46,11 +46,11 @@ public class Timetable {
 
     public Long getId() { return id; }
 
-    public Long getSchool_id() { return school_id; }
-    public void setSchool_id(Long school_id) { this.school_id = school_id; }
+    public Long getSchoolId() { return schoolId; }
+    public void setSchoolId(Long schoolId) { this.schoolId = schoolId; }
 
-    public Long getTeacher_id() { return teacher_id; }
-    public void setTeacher_id(Long teacher_id) { this.teacher_id = teacher_id; }
+    public Long getTeacherId() { return teacherId; }
+    public void setTeacherId(Long teacherId) { this.teacherId = teacherId; }
 
     public String getSubject() { return subject; }
     public void setSubject(String subject) { this.subject = subject; }

@@ -1,24 +1,30 @@
 package com.progress.timetable.service;
 
 import com.progress.timetable.dto.CreateRequest;
+import com.progress.timetable.dto.CreateTimetableBookRequest;
 import com.progress.timetable.model.Timetable;
+import com.progress.timetable.model.TimetableBookings;
+import com.progress.timetable.repository.TimetableBookRepository;
 import com.progress.timetable.repository.TimetableRepository;
 import org.springframework.stereotype.Service;
 
 @Service
 public class TimetableService {
     private final TimetableRepository timetableRepository;
+    private final TimetableBookRepository timetableBookRepository;
 
-    public TimetableService(TimetableRepository timetableRepository)
+    public TimetableService(TimetableRepository timetableRepository,
+                            TimetableBookRepository timetableBookRepository)
     {
         this.timetableRepository = timetableRepository;
+        this.timetableBookRepository = timetableBookRepository;
     }
 
     public void createTimetable(CreateRequest request)
     {
         Timetable timetable = new Timetable();
-        timetable.setSchool_id(request.getSchool_id());
-        timetable.setTeacher_id(request.getTeacher_id());
+        timetable.setSchoolId(request.getSchoolId());
+        timetable.setTeacherId(request.getTeacherId());
 
         timetable.setSubject(request.getSubject());
 
@@ -32,13 +38,23 @@ public class TimetableService {
         timetableRepository.save(timetable);
     }
 
+    public void createTimetableBook(Long timetable_id, Long student_id)
+    {
+        TimetableBookings timetableBookings = new TimetableBookings();
+
+        timetableBookings.setTimetable_id(timetable_id);
+        timetableBookings.setStudent_id(student_id);
+
+        timetableBookRepository.save(timetableBookings);
+    }
+
     public void updateTimetable(Long id, CreateRequest request)
     {
         Timetable timetable = timetableRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Расписание не найдено"));
 
-        if(request.getSchool_id() != null) timetable.setSchool_id(request.getSchool_id());
-        if(request.getTeacher_id() != null) timetable.setTeacher_id(request.getTeacher_id());
+        if(request.getSchoolId() != null) timetable.setSchoolId(request.getSchoolId());
+        if(request.getTeacherId() != null) timetable.setTeacherId(request.getTeacherId());
 
         if(request.getSubject() != null) timetable.setSubject(request.getSubject());
 
