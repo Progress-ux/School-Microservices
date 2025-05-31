@@ -28,6 +28,11 @@ public class School {
     @Column(name = "teacher_id")
     private Set<Long> teacherIds = new HashSet<>();
 
+    @ElementCollection
+    @CollectionTable(name = "school_students", joinColumns = @JoinColumn(name = "school_id"))
+    @Column(name = "student_id")
+    private Set<Long> studentIds = new HashSet<>();
+
     public School() {}
 
     public Long getId() { return id; }
@@ -38,8 +43,11 @@ public class School {
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
 
-//    public Set<Long> getTeachersId() { return teachersId; }
-//    public void setTeachersId(Set<Long> teachersId) { this.teachersId = teachersId; }
+    public Set<Long> getTeachersIds() { return teacherIds; }
+    public void setTeachersIds(Set<Long> teacherIds) { this.teacherIds = teacherIds; }
+
+    public Set<Long> getStudentIds() { return studentIds; }
+    public void setStudentIds(Set<Long> studentIds) { this.studentIds = studentIds; }
 
     @PrePersist
     protected void onCreate() {

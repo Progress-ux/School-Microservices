@@ -21,6 +21,7 @@ public class ValidateTokenService {
 
     public Map<String, Object> getUserInfo(String token)
     {
+        System.out.println("Вызов getUserInfo");
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", token);
 

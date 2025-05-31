@@ -1,6 +1,8 @@
 package com.progress.school.controller;
 
 import com.progress.school.dto.CreateRequest;
+import com.progress.school.dto.StudentInfo;
+import com.progress.school.dto.TeacherInfo;
 import com.progress.school.model.School;
 import com.progress.school.repository.SchoolRepository;
 import com.progress.school.repository.SchoolTeacherRepository;
@@ -18,6 +20,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -49,11 +52,13 @@ public class SchoolController {
     }
 
     @PostMapping("/schools")
-    @Operation(summary = "Создание новой школы", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Создание новой школы",
+            description = "Позволяет создать новую школу. Требуются права администратора.",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Школа успешно добавлена"),
             @ApiResponse(responseCode = "400", description = "Ошибка при добавлении школы"),
-            @ApiResponse(responseCode = "401", description = "Недостаточно прав"),
+            @ApiResponse(responseCode = "401", description = "Невалидный или отсутствующий токен"),
             @ApiResponse(responseCode = "403", description = "Недостаточно прав")
     })
     public ResponseEntity<?> createSchool(@RequestBody CreateRequest request,
@@ -64,19 +69,22 @@ public class SchoolController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Невалидный или отсутствующий токен");
 
         String role = (String) userInfo.get("role");
-        if ("ADMIN".equals(role))
-        {
-            schoolService.createSchool(request);
-            return ResponseEntity.ok("Школа добавлена");
-        }
-        else
+
+        if(!"ADMIN".equals(role))
         {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Недостаточно прав");
         }
+
+        schoolService.createSchool(request);
+        return ResponseEntity.ok("Школа добавлена");
     }
 
+
     @GetMapping("/schools")
-    @Operation(summary = "Получение всех школ")
+    @Operation(
+        summary = "Получение всех школ",
+        description = "Возвращает список всех школ"
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Список школы получен"),
             @ApiResponse(responseCode = "404", description = "Не удалось получить список школ")
@@ -87,8 +95,10 @@ public class SchoolController {
     }
 
     @GetMapping("/schools/{id}")
-    @Operation(summary = "Получение школы по ID",
-            description = "Возвращает информацию о школе")
+    @Operation(
+        summary = "Получение школы по ID",
+        description = "Возвращает информацию о школе по ее ID"
+    )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Школа найдена"),
             @ApiResponse(responseCode = "404", description = "Школа с указанным ID не найдена")
@@ -113,10 +123,17 @@ public class SchoolController {
 
     @PutMapping("/schools/{id}")
     @Operation(
-            summary = "Обновление данных школы",
-            description = "Доступно только администратору",
-            security = @SecurityRequirement(name = "bearerAuth")
+        summary = "Обновление данных школы",
+        description = "Обновляет информацию о школе. Доступно только для администраторов.",
+        security = @SecurityRequirement(name = "bearerAuth")
     )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Данные школы обновлены"),
+        @ApiResponse(responseCode = "400", description = "Некорректные данные"),
+        @ApiResponse(responseCode = "401", description = "Невалидный или отсутствующий токен"),
+        @ApiResponse(responseCode = "403", description = "Недостаточно прав"),
+        @ApiResponse(responseCode = "404", description = "Школа не найдена")
+    })
     public ResponseEntity<?> updateIdSchool(@PathVariable(name = "id") Long id,
                                             @RequestBody CreateRequest request,
                                             HttpServletRequest httpServletRequest)
@@ -142,6 +159,16 @@ public class SchoolController {
     }
 
     @DeleteMapping("/schools/{id}")
+    @Operation(
+        summary = "Удаление школы",
+        description = "Удаляет школу по ее ID. Требуются права администратора."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Школа удалена"),
+        @ApiResponse(responseCode = "401", description = "Невалидный или отсутствующий токен"),
+        @ApiResponse(responseCode = "403", description = "Недостаточно прав"),
+        @ApiResponse(responseCode = "404", description = "Школа не найдена")
+    })
     public ResponseEntity<?> deleteIdSchool(@PathVariable(name = "id") Long id,
                                             HttpServletRequest httpServletRequest)
     {
@@ -166,7 +193,7 @@ public class SchoolController {
     @GetMapping("/schools/{id}/teachers")
     @Operation(
         summary = "Получение списка учителей в школе",
-        description = "Возвращает список ID учителей, прикреплённых к указанной школе",
+        description = "Возвращает список учителей, прикреплённых к указанной школе",
         security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponses(value = {
@@ -181,12 +208,67 @@ public class SchoolController {
         if(userInfo == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Невалидный или отсутствующий токен");
 
-        return ResponseEntity.ok(schoolTeacherRepository.findTeacherInfoBySchoolId(id));
+        List<TeacherInfo> teachers = schoolTeacherRepository.findTeacherInfoBySchoolId(id);
+        return ResponseEntity.ok(teachers);
     }
 
     @GetMapping("/schools/validate")
-    public ResponseEntity<?> validateSchoolId(@RequestParam Long id)
+    @Operation(
+        summary = "Проверка существования школы",
+        description = "Возвращает true или false, зависит от наличия школы по указанному ID"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Ответ получен"),
+        @ApiResponse(responseCode = "401", description = "Отсутствует или недействительный токен"),
+        @ApiResponse(responseCode = "404", description = "Школа с таким ID не найдена")
+    })
+    public ResponseEntity<?> validateSchoolId(@RequestParam("id") Long id)
     {
         return ResponseEntity.ok(schoolRepository.existsById(id));
+    }
+
+    @GetMapping("/schools/{id}/students")
+    @Operation(
+        summary = "Получение списка студентов в школе",
+        description = "Возвращает список студентов, прикреплённых к указанной школе",
+        security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Список студентов получен"),
+        @ApiResponse(responseCode = "401", description = "Отсутствует или недействительный токен"),
+        @ApiResponse(responseCode = "404", description = "Школа с таким ID не найдена")
+    })
+    public ResponseEntity<?> getAllStudentsInSchoolId(@PathVariable(name = "id") Long id,
+                                                      HttpServletRequest httpServletRequest)
+    {
+        Map<String, Object> userInfo = extractUser(httpServletRequest);
+        if(userInfo == null)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Невалидный или отсутствующий токен");
+
+        String role = (String) userInfo.get("role");
+
+        if(role.equals("STUDENT"))
+        {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Недостаточно прав");
+        }
+
+        List<StudentInfo> students = schoolTeacherRepository.findStudentInfoBySchoolId(id);
+        return ResponseEntity.ok(students);
+    }
+
+    @GetMapping("/schools/{id}/validate-teacher/{teacherId}")
+    @Operation(
+        summary = "Проверка существования учителя в школе",
+        description = "Возвращает true или false, зависит от наличия школы по указанному ID и учителя"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Ответ получен"),
+        @ApiResponse(responseCode = "401", description = "Отсутствует или недействительный токен"),
+        @ApiResponse(responseCode = "404", description = "Школа с таким ID не найдена")
+    })
+    public ResponseEntity<?> validateTeacher(@PathVariable("id") Long school_id,
+                                             @PathVariable("teacherId") Long teacher_id)
+    {
+        return ResponseEntity.ok(schoolTeacherRepository.existsBySchoolIdAndTeacherId(school_id, teacher_id));
     }
 }

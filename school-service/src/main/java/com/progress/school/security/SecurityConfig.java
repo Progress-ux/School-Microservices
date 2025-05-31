@@ -14,19 +14,20 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                    .requestMatchers(HttpMethod.POST, "/api/v1/schools").authenticated()
-                    .requestMatchers(HttpMethod.GET, "/api/v1/schools").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/v1/schools/{id}").permitAll()
-                    .requestMatchers(HttpMethod.PUT, "/api/v1/schools/{id}").authenticated()
-                    .requestMatchers(HttpMethod.DELETE, "/api/v1/schools/{id}").authenticated()
-                    .requestMatchers(HttpMethod.GET, "/api/v1/schools/{id}/teachers").authenticated()
-                    .requestMatchers(HttpMethod.GET, "/api/v1/schools/validate").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/v1/schools/{id}/students").authenticated()
-                    .requestMatchers(HttpMethod.GET, "/api/v1/schools/{id}/validate-teacher/{teacherId}").permitAll()
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/schools").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/schools").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/schools/*").permitAll()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/schools/*").permitAll()
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/schools/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/schools/*/teachers").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/schools/validate").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/schools/*/students").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/schools/*/validate-teacher/*").permitAll()
                 .anyRequest().authenticated()
             );
 
         return http.build();
     }
 }
+
