@@ -24,7 +24,6 @@ services:
       DB_NAME: App
       DB_USER: postgres
       DB_PASSWORD: admin
-      ACCOUNT_SERVICE_URL: http://account-service:8080
     networks:
       - backend
 
@@ -41,8 +40,23 @@ services:
       DB_NAME: App
       DB_USER: postgres
       DB_PASSWORD: admin
-      ACCOUNT_SERVICE_URL: http://account-service:8080
-      SCHOOL_SERVICE_URL: http://school-service:8081
+    networks:
+      - backend
+
+  document-service:
+    build: ./document-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - account-service
+      - school-service
+      - timetable-service
+    environment:
+      DB_HOST: host.docker.internal
+      DB_PORT: 5432
+      DB_NAME: App
+      DB_USER: postgres
+      DB_PASSWORD: admin
     networks:
       - backend
 

@@ -9,4 +9,5 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Данные о документах",
         description = "Операции с документами")
 public class DocumentController {
+
 }

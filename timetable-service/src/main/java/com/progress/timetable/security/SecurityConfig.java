@@ -10,27 +10,27 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
     @Bean
-public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    http
-        .csrf(AbstractHttpConfigurer::disable)
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
 
-            .requestMatchers(HttpMethod.POST, "/api/v1/timetables").permitAll()
-            .requestMatchers(HttpMethod.GET, "/api/v1/timetables").permitAll()
-            .requestMatchers(HttpMethod.GET, "/api/v1/timetables/*").permitAll()
-            .requestMatchers(HttpMethod.PUT, "/api/v1/timetables/*").permitAll()
-            .requestMatchers(HttpMethod.DELETE, "/api/v1/timetables/*").permitAll()
-            .requestMatchers(HttpMethod.POST, "/api/v1/timetables/*/book").permitAll()
-            .requestMatchers(HttpMethod.GET, "/api/v1/timetables/validate").permitAll()
-            .requestMatchers(HttpMethod.GET, "/api/v1/timetables/school/*").permitAll()
-            .requestMatchers(HttpMethod.GET, "/api/v1/timetables/teacher/*").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/timetables").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/timetables").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/timetables/*").permitAll()
+                .requestMatchers(HttpMethod.PUT, "/api/v1/timetables/*").permitAll()
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/timetables/*").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/timetables/*/book").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/timetables/validate").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/timetables/school/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/timetables/teacher/*").permitAll()
 
-            // Остальные запросы требуют авторизацию
-            .anyRequest().authenticated()
-        );
+                // Остальные запросы требуют авторизацию
+                .anyRequest().authenticated()
+            );
 
-    return http.build();
-}
+        return http.build();
+    }
 }
 
