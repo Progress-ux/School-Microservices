@@ -14,6 +14,10 @@ public class DocumentService {
         this.documentRepository = documentRepository;
     }
 
+    /**
+     * Создает новый документ.
+     * @param request Объект с данными документа
+     */
     public void createDocument(CreateRequest request)
     {
         Document document = new Document();
@@ -29,6 +33,11 @@ public class DocumentService {
         documentRepository.save(document);
     }
 
+    /**
+     * Обновление документа
+     * @param id ID документа
+     * @param request Объект с новыми данными документа
+     */
     public void updateDocument(Long id, CreateRequest request)
     {
         Document document = documentRepository.findById(id)

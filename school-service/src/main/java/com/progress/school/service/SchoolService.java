@@ -14,6 +14,11 @@ public class SchoolService {
         this.schoolRepository = schoolRepository;
     }
 
+    /**
+     * Регистрация новой школы.
+     * Проверяет, что name не пустое.
+     * @param request объект с данными регистрации
+     */
     public void createSchool(CreateRequest request)
     {
         if(request.getName() == null)
@@ -28,6 +33,11 @@ public class SchoolService {
         schoolRepository.save(school);
     }
 
+    /**
+     * Обновление данных школы.
+     * @param id ID школы
+     * @param request Объект с новыми данными школы
+     */
     public void updateSchool(Long id, CreateRequest request)
     {
         School school = schoolRepository.findById(id)

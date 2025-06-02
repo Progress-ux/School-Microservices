@@ -2,7 +2,6 @@ package com.progress.account.model;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.HashSet;
 
 @Entity
 @Table(name = "users")
@@ -26,9 +25,6 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
-
-//    @ManyToMany(mappedBy = "teachers")
-//    private Set<School> schools = new HashSet<>();
 
     private LocalDateTime created_at;
     private LocalDateTime updated_at;

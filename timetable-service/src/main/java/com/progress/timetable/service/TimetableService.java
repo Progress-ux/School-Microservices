@@ -20,6 +20,10 @@ public class TimetableService {
         this.timetableBookRepository = timetableBookRepository;
     }
 
+    /**
+     * Создание нового расписания.
+     * @param request объект с данными.
+     */
     public void createTimetable(CreateRequest request)
     {
         Timetable timetable = new Timetable();
@@ -38,6 +42,11 @@ public class TimetableService {
         timetableRepository.save(timetable);
     }
 
+    /**
+     * Создание записи студента.
+     * @param timetable_id ID расписания.
+     * @param student_id ID студента.
+     */
     public void createTimetableBook(Long timetable_id, Long student_id)
     {
         TimetableBookings timetableBookings = new TimetableBookings();
@@ -48,6 +57,11 @@ public class TimetableService {
         timetableBookRepository.save(timetableBookings);
     }
 
+    /**
+     * Обновление данных расписания.
+     * @param id ID расписания.
+     * @param request Объект с обновленными данными.
+     */
     public void updateTimetable(Long id, CreateRequest request)
     {
         Timetable timetable = timetableRepository.findById(id)

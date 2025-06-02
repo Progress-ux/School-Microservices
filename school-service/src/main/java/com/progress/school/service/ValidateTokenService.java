@@ -19,9 +19,13 @@ public class ValidateTokenService {
         this.restTemplate = new RestTemplate();
     }
 
+    /**
+     * Отправляет запрос в Account-service для извлечения данных из токена.
+     * @param token Токен пользователя для извлечения.
+     * @return Возвращает информацию о пользователе из токена(id, email, role, boolean valid)
+     */
     public Map<String, Object> getUserInfo(String token)
     {
-        System.out.println("Вызов getUserInfo");
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", token);
 
@@ -33,7 +37,6 @@ public class ValidateTokenService {
                 entity,
                 new ParameterizedTypeReference<Map<String, Object>>() {}
         );
-        System.out.println("Response from account-service: " + response.getBody());
         return response.getBody();
     }
 }

@@ -57,7 +57,6 @@ public class JwtUtil {
     // Метод для извлечения всех claims (полей) из JWT токена
     private Claims extractAllClaims(String token)
     {
-        System.out.println("extractAllClaims - " + token);
         return Jwts.parser()
                 .verifyWith(key)
                 .build()
@@ -72,9 +71,7 @@ public class JwtUtil {
      */
     public boolean isTokenExpired(String token)
     {
-        boolean isToken = extractAllClaims(token).getExpiration().before(new Date());
-        System.out.println("isTokenExpired" + token + "\nisToken - " + isToken);
-        return isToken;
+        return extractAllClaims(token).getExpiration().before(new Date());
     }
 
     /**

@@ -19,22 +19,12 @@ public class ValidateSchoolTeacherService {
         this.restTemplate = new RestTemplate();
     }
 
-    public boolean isValidateSchool(Long school_id)
-    {
-        try {
-            ResponseEntity<Boolean> response = restTemplate.exchange(
-                    "http://school-service:8081/api/v1/schools/validate?id=" + school_id,
-                    HttpMethod.GET,
-                    null,
-                    new ParameterizedTypeReference<Boolean>() {
-                    }
-            );
-            return Boolean.TRUE.equals(response.getBody());
-        } catch (Exception e) {
-            System.out.println("Ошибка валидации школы: " + e.getMessage());
-            return false;
-        }
-    }
+    /**
+     * Проверяет валидацию учителя в указанной школе.
+     * @param school_id ID школы
+     * @param teacher_id ID учителя
+     * @return Возвращает true или false в случае если не найден учитель.
+     */
     public boolean isValidateTeacher(Long school_id, Long teacher_id)
     {
         try {
@@ -47,7 +37,7 @@ public class ValidateSchoolTeacherService {
             );
             return Boolean.TRUE.equals(response.getBody());
         } catch (Exception e) {
-            System.out.println("Ошибка валидации учителя: " + e.getMessage());
+            System.out.println("Ошибка валидации учителя или школы: " + e.getMessage());
             return false;
         }
     }

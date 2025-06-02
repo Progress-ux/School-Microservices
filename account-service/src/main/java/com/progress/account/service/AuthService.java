@@ -45,7 +45,6 @@ public class AuthService {
      * @param token JWT токен авторизации
      * @param request объект с новыми данными пользователя
      */
-
     public void updateUser(String token, RegisterRequest request)
     {
         Long userId = jwtUtil.extractId(token);

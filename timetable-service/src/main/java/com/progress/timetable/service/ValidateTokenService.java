@@ -19,6 +19,11 @@ public class ValidateTokenService {
         this.restTemplate = new RestTemplate();
     }
 
+    /**
+     * Отправляет запрос в Account-service для извлечения данных из токена.
+     * @param token Токен пользователя для извлечения.
+     * @return Возвращает информацию о пользователе из токена(id, email, role, boolean valid)
+     */
     public Map<String, Object> getUserInfo(String token)
     {
         HttpHeaders headers = new HttpHeaders();
